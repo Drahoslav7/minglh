@@ -7,7 +7,7 @@ package glh
 import (
 	"testing"
 
-	"github.com/go-gl/gl"
+	"github.com/go-gl/gl/v4.5-core/gl"
 	"github.com/go-gl/testutils"
 )
 

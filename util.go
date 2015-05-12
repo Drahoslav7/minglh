@@ -12,8 +12,8 @@ import (
 	"os"
 	"unsafe"
 
-	"github.com/go-gl/gl"
-	"github.com/go-gl/glu"
+	"github.com/go-gl/gl/v4.5-core/gl"
+	"github.com/lukevers/glu"
 )
 
 // Sizeof yields the byte size for GL type specified by the given enum.

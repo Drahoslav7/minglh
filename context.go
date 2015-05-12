@@ -5,7 +5,7 @@
 package glh
 
 import (
-	"github.com/go-gl/gl"
+	"github.com/go-gl/gl/v4.5-core/gl"
 )
 
 // Types implementing Context can be used with `With`

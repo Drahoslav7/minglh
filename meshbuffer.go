@@ -5,7 +5,7 @@
 package glh
 
 import (
-	"github.com/go-gl/gl"
+	"github.com/go-gl/gl/v4.5-core/gl"
 )
 
 // Mesh describes the data offsets for a single mesh inside a mesh buffer.

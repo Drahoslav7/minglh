@@ -8,7 +8,7 @@ import (
 	"image"
 	"log"
 
-	"github.com/go-gl/gl"
+	"github.com/go-gl/gl/v4.5-core/gl"
 )
 
 // Mapping from texture dimensions onto ready made framebuffer/renderbuffer

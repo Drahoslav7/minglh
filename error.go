@@ -6,8 +6,8 @@ package glh
 
 import (
 	"fmt"
-	"github.com/go-gl/gl"
-	"github.com/go-gl/glu"
+	"github.com/go-gl/gl/v4.5-core/gl"
+	"github.com/lukevers/glu"
 )
 
 // CheckGLError returns an opengl error if one exists.
