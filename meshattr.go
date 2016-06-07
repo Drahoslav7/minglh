@@ -3,9 +3,8 @@
 // license that can be found in the LICENSE file.
 
 package glh
-
 import (
-	"github.com/go-gl/gl/v4.5-core/gl"
+	"github.com/go-gl/gl/v3.2-compatibility/gl"
 	"unsafe"
 )
 
@@ -26,10 +25,10 @@ const (
 type Attr struct {
 	data    interface{} // Data store.
 	name    string      // Attribute name.
-	vbo     gl.Buffer   // Vertex buffer identity.
-	target  gl.GLenum   // Buffer type.
-	usage   gl.GLenum   // Usage type of this attribute.
-	typ     gl.GLenum   // Attribute type.
+	vbo     uint32// gl.Buffer   // Vertex buffer identity.
+	target  uint32   // Buffer type.
+	usage   uint32   // Usage type of this attribute.
+	typ     uint32   // Attribute type.
 	size    int         // Component size (number of elements).
 	stride  int         // Size of component in bytes.
 	gpuSize int         // Size of data on GPU.
@@ -45,7 +44,7 @@ type Attr struct {
 // In other modes, the MeshBuffer uses this name to identify the attribute's
 // purpose. In these cases, it is advised to use the NewIndexAttr,
 // NewPositionAttr, etc. wrappers.
-func NewAttr(name string, size int, typ, usage gl.GLenum) *Attr {
+func NewAttr(name string, size int, typ, usage uint32) *Attr {
 	a := new(Attr)
 	a.name = name
 
@@ -64,27 +63,27 @@ func NewAttr(name string, size int, typ, usage gl.GLenum) *Attr {
 }
 
 // NewPositionAttr creates a new vertex position attribute.
-func NewPositionAttr(size int, typ, usage gl.GLenum) *Attr {
+func NewPositionAttr(size int, typ, usage uint32) *Attr {
 	return NewAttr(mbPositionKey, size, typ, usage)
 }
 
 // NewColorAttr creates a new vertex color attribute.
-func NewColorAttr(size int, typ, usage gl.GLenum) *Attr {
+func NewColorAttr(size int, typ, usage uint32) *Attr {
 	return NewAttr(mbColorKey, size, typ, usage)
 }
 
 // NewNormalAttr creates a new surface normal attribute.
-func NewNormalAttr(size int, typ, usage gl.GLenum) *Attr {
+func NewNormalAttr(size int, typ, usage uint32) *Attr {
 	return NewAttr(mbNormalKey, size, typ, usage)
 }
 
 // NewTexCoordAttr creates a new vertex texture coordinate attribute.
-func NewTexCoordAttr(size int, typ, usage gl.GLenum) *Attr {
+func NewTexCoordAttr(size int, typ, usage uint32) *Attr {
 	return NewAttr(mbTexCoordKey, size, typ, usage)
 }
 
 // NewIndexAttr creates a new index attribute.
-func NewIndexAttr(size int, typ, usage gl.GLenum) *Attr {
+func NewIndexAttr(size int, typ, usage uint32) *Attr {
 	a := NewAttr(mbIndexKey, size, typ, usage)
 	a.target = gl.ELEMENT_ARRAY_BUFFER
 	return a
@@ -163,7 +162,7 @@ func (a *Attr) Size() int { return a.size }
 func (a *Attr) Stride() int { return a.stride }
 
 // Type returns the data type of the attribute.
-func (a *Attr) Type() gl.GLenum { return a.typ }
+func (a *Attr) Type() uint32 { return a.typ }
 
 // bind binds the buffer.
 func (a *Attr) bind() { a.vbo.Bind(a.target) }
@@ -172,10 +171,10 @@ func (a *Attr) bind() { a.vbo.Bind(a.target) }
 func (a *Attr) unbind() { a.vbo.Unbind(a.target) }
 
 // Target returns the buffer target.
-func (a *Attr) Target() gl.GLenum { return a.target }
+func (a *Attr) Target() uint32 { return a.target }
 
 // SetTarget sets the buffer target.
-func (a *Attr) SetTarget(t gl.GLenum) { a.target = t }
+func (a *Attr) SetTarget(t uint32) { a.target = t }
 
 // Len returns the number of elements in the data store.
 func (a *Attr) Len() int {

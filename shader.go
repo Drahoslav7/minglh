@@ -10,15 +10,15 @@ import (
 )
 
 type Shader struct {
-	Type    gl.GLenum
+	Type    uint32
 	Program string
 }
 
-func (s Shader) Compile() gl.Shader {
+func (s Shader) Compile() uint32 {
 	return MakeShader(s.Type, s.Program)
 }
 
-func NewProgram(shaders ...Shader) gl.Program {
+func NewProgram(shaders ...Shader) uint32 {
 	program := gl.CreateProgram()
 	for _, shader := range shaders {
 		program.AttachShader(shader.Compile())
@@ -41,7 +41,7 @@ func NewProgram(shaders ...Shader) gl.Program {
 	return program
 }
 
-func MakeShader(shader_type gl.GLenum, source string) gl.Shader {
+func MakeShader(shader_type uint32, source string) uint32 {
 
 	shader := gl.CreateShader(shader_type)
 	shader.Source(source)

@@ -152,21 +152,21 @@ func (mb *MeshBuffer) find(name string) *Attr {
 // Render renders the entire mesh buffer.
 // The mode defines one of the symbolic constants like GL_TRIANGLES,
 // GL_QUADS, GL_POLYGON, GL_TRIANGLE_STRIP, etc.
-func (mb *MeshBuffer) Render(mode gl.GLenum) {
+func (mb *MeshBuffer) Render(mode uint32) {
 	mb.render(mode, mb.mesh)
 }
 
 // RenderMesh renders a single mesh, idenfified by its index.
 // The mode defines one of the symbolic constants like GL_TRIANGLES,
 // GL_QUADS, GL_POLYGON, GL_TRIANGLE_STRIP, etc.
-func (mb *MeshBuffer) RenderMesh(index int, mode gl.GLenum) {
+func (mb *MeshBuffer) RenderMesh(index int, mode uint32) {
 	if index >= 0 && index < len(mb.meshes) {
 		mb.render(mode, mb.meshes[index])
 	}
 }
 
 // render draws the elements defined by the given mesh object.
-func (mb *MeshBuffer) render(mode gl.GLenum, m Mesh) {
+func (mb *MeshBuffer) render(mode uint32, m Mesh) {
 	pa := mb.find(mbPositionKey)
 	ca := mb.find(mbColorKey)
 	na := mb.find(mbNormalKey)
@@ -185,7 +185,7 @@ func (mb *MeshBuffer) render(mode gl.GLenum, m Mesh) {
 
 // renderClassic uses manual glBegin/glEnd calls to construct the mesh. This is
 // extremely slow, and mostly only useful for debugging purposes.
-func (mb *MeshBuffer) renderClassic(mode gl.GLenum, m Mesh, pa, ca, na, ta, ia *Attr) {
+func (mb *MeshBuffer) renderClassic(mode uint32, m Mesh, pa, ca, na, ta, ia *Attr) {
 	ps, pc := m[mbPositionKey][0], m[mbPositionKey][1]
 	cs, cc := m[mbColorKey][0], m[mbColorKey][1]
 	ns, nc := m[mbNormalKey][0], m[mbNormalKey][1]
@@ -231,7 +231,7 @@ func (mb *MeshBuffer) renderClassic(mode gl.GLenum, m Mesh, pa, ca, na, ta, ia *
 // than using VBO's, because the data has to be uploaded to the GPU on every
 // render pass, but it is useful for older systems where glBufferData is
 // not available.
-func (mb *MeshBuffer) renderArrays(mode gl.GLenum, m Mesh, pa, ca, na, ta, ia *Attr) {
+func (mb *MeshBuffer) renderArrays(mode uint32, m Mesh, pa, ca, na, ta, ia *Attr) {
 	ps, pc := m[mbPositionKey][0], m[mbPositionKey][1]
 	is, ic := m[mbIndexKey][0], m[mbIndexKey][1]
 	cc := m[mbColorKey][1]
@@ -274,7 +274,7 @@ func (mb *MeshBuffer) renderArrays(mode gl.GLenum, m Mesh, pa, ca, na, ta, ia *A
 
 // renderBuffered uses VBO's. This is the preferred mode for systems
 // where shader support is not present or deemed necessary.
-func (mb *MeshBuffer) renderBuffered(mode gl.GLenum, m Mesh, pa, ca, na, ta, ia *Attr) {
+func (mb *MeshBuffer) renderBuffered(mode uint32, m Mesh, pa, ca, na, ta, ia *Attr) {
 	ps, pc := m[mbPositionKey][0], m[mbPositionKey][1]
 	is, ic := m[mbIndexKey][0], m[mbIndexKey][1]
 	cc := m[mbColorKey][1]

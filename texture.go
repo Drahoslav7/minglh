@@ -16,7 +16,7 @@ import (
 //   `With(texture, func() { .. textured primitives .. })`
 // which sets gl.ENABLE_BIT
 type Texture struct {
-	gl.Texture
+	uint32 // gl.Texture
 	W, H int
 }
 
@@ -45,13 +45,11 @@ func (t *Texture) Init() {
 }
 
 func (b Texture) Enter() {
-	gl.PushAttrib(gl.ENABLE_BIT)
 	gl.Enable(gl.TEXTURE_2D)
 	b.Bind(gl.TEXTURE_2D)
 }
 func (b Texture) Exit() {
 	b.Unbind(gl.TEXTURE_2D)
-	gl.PopAttrib()
 }
 
 // Return the OpenGL texture as a golang `image.RGBA`

@@ -8,7 +8,7 @@ import (
 	"image"
 	"log"
 
-	"github.com/go-gl/gl/v4.5-core/gl"
+	"github.com/go-gl/gl/v3.2-compatibility/gl"
 )
 
 // Mapping from texture dimensions onto ready made framebuffer/renderbuffer
@@ -18,8 +18,8 @@ import (
 var framebuffers map[image.Point]*fborbo = make(map[image.Point]*fborbo)
 
 type fborbo struct {
-	fbo gl.Framebuffer
-	rbo gl.Renderbuffer
+	fbo uint32 //gl.Framebuffer
+	rbo uint32 //gl.Renderbuffer
 }
 
 // Internal function to generate a framebuffer/renderbuffer of the correct
@@ -86,6 +86,6 @@ func (b *Framebuffer) Exit() {
 	b.fbo.Unbind()
 }
 
-func (b *Framebuffer) BindFramebuffer(target gl.GLenum) {
+func (b *Framebuffer) BindFramebuffer(target uint32) {
 	b.fborbo.fbo.BindTarget(target)
 }

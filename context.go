@@ -5,7 +5,7 @@
 package glh
 
 import (
-	"github.com/go-gl/gl/v4.5-core/gl"
+	"github.com/go-gl/gl/v3.2-compatibility/gl"
 )
 
 // Types implementing Context can be used with `With`
@@ -45,32 +45,28 @@ func (c CompoundContextImpl) Exit() {
 }
 
 // A context which preserves the matrix mode, drawing, etc.
-type Matrix struct{ Type gl.GLenum }
+type Matrix struct{ Type uint32 }
 
 func (m Matrix) Enter() {
-	gl.PushAttrib(gl.TRANSFORM_BIT)
 	gl.MatrixMode(m.Type)
 	gl.PushMatrix()
 }
 
 func (m Matrix) Exit() {
 	gl.PopMatrix()
-	gl.PopAttrib()
 }
 
 // A context which preserves Attrib bits
-type Attrib struct{ Bits gl.GLbitfield }
+type Attrib struct{ Bits uint32 }
 
 func (a Attrib) Enter() {
-	gl.PushAttrib(a.Bits)
 }
 
 func (a Attrib) Exit() {
-	gl.PopAttrib()
 }
 
 type _enable struct {
-	enums []gl.GLenum
+	enums []uint32
 }
 
 func (e _enable) Enter() {
@@ -84,12 +80,12 @@ func (e _enable) Exit() {
 	gl.PopAttrib()
 }
 
-func Enable(enums ...gl.GLenum) Context {
+func Enable(enums ...uint32) Context {
 	return _enable{enums}
 }
 
 type _disable struct {
-	enums []gl.GLenum
+	enums []uint32
 }
 
 func (e _disable) Enter() {
@@ -103,14 +99,14 @@ func (e _disable) Exit() {
 	gl.PopAttrib()
 }
 
-func Disable(enums ...gl.GLenum) Context {
+func Disable(enums ...uint32) Context {
 	return _disable{enums}
 }
 
 // Context which does `gl.Begin` and `gl.End`
 // Example:
 // 	With(Primitive{gl.LINES}, func() { gl.Vertex2f(0, 0); gl.Vertex2f(1,1) })
-type Primitive struct{ Type gl.GLenum }
+type Primitive struct{ Type uint32 }
 
 func (p Primitive) Enter() { gl.Begin(p.Type) }
 func (p Primitive) Exit()  { gl.End() }

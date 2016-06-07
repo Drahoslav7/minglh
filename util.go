@@ -12,12 +12,12 @@ import (
 	"os"
 	"unsafe"
 
-	"github.com/go-gl/gl/v4.5-core/gl"
-	"github.com/lukevers/glu"
+	"github.com/go-gl/gl/v3.2-compatibility/gl"
+	"github.com/go-gl/glu"
 )
 
 // Sizeof yields the byte size for GL type specified by the given enum.
-func Sizeof(gtype gl.GLenum) uint {
+func Sizeof(gtype uint32) uint {
 	switch gtype {
 	case gl.BOOL:
 		var v gl.GLboolean

@@ -5,26 +5,27 @@
 package glh
 
 import (
-	"github.com/go-gl/gl/v4.5-core/gl"
+	"github.com/go-gl/gl/v3.2-compatibility/gl"
 	"image"
 	"image/png"
 	"os"
+	"unsafe"
 )
 
 // A node represents an area of an atlas texture which
 // has been allocated for use.
 type atlasNode struct {
-	x int // region x
-	y int // region y + height
-	z int // region width
+	x int32 // region x
+	y int32 // region y + height
+	z int32 // region width
 }
 
 // A region denotes an allocated chunk of space in an atlas.
 type AtlasRegion struct {
-	X int
-	Y int
-	W int
-	H int
+	X int32
+	Y int32
+	W int32
+	H int32
 }
 
 // A texture atlas is used to tightly pack arbitrarily many small images
@@ -40,10 +41,10 @@ type TextureAtlas struct {
 	nodes   []atlasNode // Allocated nodes.
 	data    []byte      // Atlas pixel data.
 	used    uint        // Allocated surface size.
-	width   int         // Width (in pixels) of the underlying texture.
-	height  int         // Height (in pixels) of the underlying texture.
-	depth   int         // Color depth of the underlying texture.
-	texture gl.Texture  // Glyph texture.
+	width   int32         // Width (in pixels) of the underlying texture.
+	height  int32         // Height (in pixels) of the underlying texture.
+	depth   int32         // Color depth of the underlying texture.
+	texture uint32  // Glyph texture.
 }
 
 // NewAtlas creates a new texture atlas.
@@ -54,7 +55,7 @@ type TextureAtlas struct {
 // depth should be 1, 3 or 4 and it will specify if the texture is
 // created with Alpha, RGB or RGBA channels.
 // The image data supplied through Atlas.Set() should be of the same format.
-func NewTextureAtlas(width, height, depth int) *TextureAtlas {
+func NewTextureAtlas(width, height, depth int32) *TextureAtlas {
 	switch depth {
 	case 1, 3, 4:
 	default:
@@ -71,7 +72,7 @@ func NewTextureAtlas(width, height, depth int) *TextureAtlas {
 	// We want a one pixel border around the whole atlas to avoid
 	// any artefacts when sampling our texture.
 	a.nodes = append(a.nodes, atlasNode{1, 1, width - 2})
-	a.texture = gl.GenTexture()
+	gl.GenTextures(1, &a.texture)
 	return a
 }
 
@@ -79,7 +80,7 @@ func NewTextureAtlas(width, height, depth int) *TextureAtlas {
 func (a *TextureAtlas) Release() {
 	a.data = nil
 	a.nodes = nil
-	a.texture.Delete()
+	gl.DeleteTextures(1, &a.texture)
 	a.texture = 0
 	a.width = 0
 	a.height = 0
@@ -106,21 +107,24 @@ func (a *TextureAtlas) Clear() {
 }
 
 // Bind binds the atlas texture, so it can be used for rendering.
-func (a *TextureAtlas) Bind(target gl.GLenum) { a.texture.Bind(target) }
+func (a *TextureAtlas) Bind(target uint32) {
+	gl.BindTexture(target, a.texture)
+}
 
 // Unbind unbinds the current texture.
 // Note that this applies to any texture currently active.
 // If this is not the atlas texture, it will still perform the action.
-func (a *TextureAtlas) Unbind(target gl.GLenum) { a.texture.Unbind(target) }
+func (a *TextureAtlas) Unbind(target uint32) {
+	gl.BindTexture(target, 0)
+}
 
 // Commit creates the actual texture from the atlas image data.
 // This should be called after all regions have been defined and set,
 // and before you start using the texture for display.
-func (a *TextureAtlas) Commit(target gl.GLenum) {
-	gl.PushAttrib(gl.CURRENT_BIT | gl.ENABLE_BIT)
+func (a *TextureAtlas) Commit(target uint32) {
 	gl.Enable(target)
 
-	a.texture.Bind(target)
+	gl.BindTexture(target, a.texture)
 
 	gl.TexParameteri(target, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
 	gl.TexParameteri(target, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
@@ -130,24 +134,23 @@ func (a *TextureAtlas) Commit(target gl.GLenum) {
 	switch a.depth {
 	case 4:
 		gl.TexImage2D(target, 0, gl.RGBA, a.width, a.height,
-			0, gl.RGBA, gl.UNSIGNED_BYTE, a.data)
+			0, gl.RGBA, gl.UNSIGNED_BYTE, unsafe.Pointer(&a.data))
 
 	case 3:
 		gl.TexImage2D(target, 0, gl.RGB, a.width, a.height,
-			0, gl.RGB, gl.UNSIGNED_BYTE, a.data)
+			0, gl.RGB, gl.UNSIGNED_BYTE, unsafe.Pointer(&a.data))
 
 	case 1:
 		gl.TexImage2D(target, 0, gl.ALPHA, a.width, a.height,
-			0, gl.ALPHA, gl.UNSIGNED_BYTE, a.data)
+			0, gl.ALPHA, gl.UNSIGNED_BYTE, unsafe.Pointer(&a.data))
 	}
 
-	gl.PopAttrib()
 }
 
 // Allocate allocates a new region of the given dimensions in the atlas.
 // It returns false if the allocation failed. This can happen when the
 // specified dimensions exceed atlas bounds, or the atlas is full.
-func (a *TextureAtlas) Allocate(width, height int) (AtlasRegion, bool) {
+func (a *TextureAtlas) Allocate(width, height int32) (AtlasRegion, bool) {
 	var region AtlasRegion
 	region.X = 0
 	region.Y = 0
@@ -155,8 +158,8 @@ func (a *TextureAtlas) Allocate(width, height int) (AtlasRegion, bool) {
 	region.H = height
 
 	bestIndex := -1
-	bestWidth := 1<<31 - 1
-	bestHeight := 1<<31 - 1
+	bestWidth := int32(1<<31 - 1)
+	bestHeight := int32(1<<31 - 1)
 
 	for index := range a.nodes {
 		y := a.fit(index, width, height)
@@ -214,14 +217,14 @@ func (a *TextureAtlas) Allocate(width, height int) (AtlasRegion, bool) {
 
 // Set pastes the given data into the atlas buffer at the given coordinates.
 // It assumes there is enough space available for the data to fit.
-func (a *TextureAtlas) Set(region AtlasRegion, src []byte, stride int) {
+func (a *TextureAtlas) Set(region AtlasRegion, src []byte, stride int32) {
 	depth := a.depth
 	x := region.X
 	y := region.Y
 	height := region.H
 	dst := a.data
 
-	for i := 0; i < height; i++ {
+	for i := int32(0); i < height; i++ {
 		dp := ((y+i)*a.width + x) * depth
 		sp := i * stride
 		copy(
@@ -240,7 +243,7 @@ func (a *TextureAtlas) Save(file string) (err error) {
 
 	defer fd.Close()
 
-	rect := image.Rect(0, 0, a.width, a.height)
+	rect := image.Rect(0, 0, int(a.width), int(a.height))
 
 	switch a.depth {
 	case 1:
@@ -263,19 +266,19 @@ func (a *TextureAtlas) Save(file string) (err error) {
 }
 
 // Width returns the underlying texture width in pixels.
-func (a *TextureAtlas) Width() int { return a.width }
+func (a *TextureAtlas) Width() int32 { return a.width }
 
 // Height returns the underlying texture height in pixels.
-func (a *TextureAtlas) Height() int { return a.height }
+func (a *TextureAtlas) Height() int32 { return a.height }
 
 // Depth returns the underlying texture color depth.
-func (a *TextureAtlas) Depth() int { return a.depth }
+func (a *TextureAtlas) Depth() int32 { return a.depth }
 
 // fit checks if the given dimensions fit in the given node.
 // If not, it checks any subsequent nodes for a match.
 // It returns the height for the last checked node.
 // Returns -1 if the width or height exceed texture capacity.
-func (a *TextureAtlas) fit(index, width, height int) int {
+func (a *TextureAtlas) fit(index int, width, height int32) int32 {
 	node := a.nodes[index]
 
 	if node.x+width > a.width-1 {
