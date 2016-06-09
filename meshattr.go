@@ -25,12 +25,12 @@ const (
 type Attr struct {
 	data    interface{} // Data store.
 	name    string      // Attribute name.
-	vbo     uint32// gl.Buffer   // Vertex buffer identity.
+	vbo     uint32   // gl.Buffer   // Vertex buffer identity.
 	target  uint32   // Buffer type.
 	usage   uint32   // Usage type of this attribute.
 	typ     uint32   // Attribute type.
-	size    int         // Component size (number of elements).
-	stride  int         // Size of component in bytes.
+	size    int32         // Component size (number of elements).
+	stride  int32         // Size of component in bytes.
 	gpuSize int         // Size of data on GPU.
 	invalid bool        // Do we require re-committing?
 }
@@ -44,7 +44,7 @@ type Attr struct {
 // In other modes, the MeshBuffer uses this name to identify the attribute's
 // purpose. In these cases, it is advised to use the NewIndexAttr,
 // NewPositionAttr, etc. wrappers.
-func NewAttr(name string, size int, typ, usage uint32) *Attr {
+func NewAttr(name string, size int32, typ, usage uint32) *Attr {
 	a := new(Attr)
 	a.name = name
 
@@ -58,32 +58,32 @@ func NewAttr(name string, size int, typ, usage uint32) *Attr {
 	a.typ = typ
 
 	a.Clear()
-	a.stride = int(Sizeof(typ))
+	a.stride = Sizeof(typ)
 	return a
 }
 
 // NewPositionAttr creates a new vertex position attribute.
-func NewPositionAttr(size int, typ, usage uint32) *Attr {
+func NewPositionAttr(size int32, typ, usage uint32) *Attr {
 	return NewAttr(mbPositionKey, size, typ, usage)
 }
 
 // NewColorAttr creates a new vertex color attribute.
-func NewColorAttr(size int, typ, usage uint32) *Attr {
+func NewColorAttr(size int32, typ, usage uint32) *Attr {
 	return NewAttr(mbColorKey, size, typ, usage)
 }
 
 // NewNormalAttr creates a new surface normal attribute.
-func NewNormalAttr(size int, typ, usage uint32) *Attr {
+func NewNormalAttr(size int32, typ, usage uint32) *Attr {
 	return NewAttr(mbNormalKey, size, typ, usage)
 }
 
 // NewTexCoordAttr creates a new vertex texture coordinate attribute.
-func NewTexCoordAttr(size int, typ, usage uint32) *Attr {
+func NewTexCoordAttr(size int32, typ, usage uint32) *Attr {
 	return NewAttr(mbTexCoordKey, size, typ, usage)
 }
 
 // NewIndexAttr creates a new index attribute.
-func NewIndexAttr(size int, typ, usage uint32) *Attr {
+func NewIndexAttr(size int32, typ, usage uint32) *Attr {
 	a := NewAttr(mbIndexKey, size, typ, usage)
 	a.target = gl.ELEMENT_ARRAY_BUFFER
 	return a
@@ -96,14 +96,14 @@ func (a *Attr) init(mode RenderMode) {
 	case RenderClassic, RenderArrays:
 		// No VBO in classic and vertex array modes.
 	default:
-		a.vbo = gl.GenBuffer()
+		gl.GenBuffers(1, &a.vbo)
 	}
 }
 
 // release release attribute resources.
 func (a *Attr) release() {
 	if a.vbo != 0 {
-		a.vbo.Delete()
+		gl.DeleteBuffers(1, &a.vbo)
 		a.vbo = 0
 	}
 
@@ -156,19 +156,19 @@ func (a *Attr) Invalid() bool { return a.invalid }
 func (a *Attr) Invalidate() { a.invalid = true }
 
 // Size returns the number of elements in a vertext component for this attribute.
-func (a *Attr) Size() int { return a.size }
+func (a *Attr) Size() int32 { return a.size }
 
 // Stride returns the stride value for the data type this attribute holds.
-func (a *Attr) Stride() int { return a.stride }
+func (a *Attr) Stride() int32 { return a.stride }
 
 // Type returns the data type of the attribute.
 func (a *Attr) Type() uint32 { return a.typ }
 
 // bind binds the buffer.
-func (a *Attr) bind() { a.vbo.Bind(a.target) }
+func (a *Attr) bind() { gl.BindBuffer(a.target, a.vbo)}
 
 // unbind unbinds the buffer.
-func (a *Attr) unbind() { a.vbo.Unbind(a.target) }
+func (a *Attr) unbind() { gl.BindBuffer(a.target, 0)}
 
 // Target returns the buffer target.
 func (a *Attr) Target() uint32 { return a.target }
@@ -177,24 +177,24 @@ func (a *Attr) Target() uint32 { return a.target }
 func (a *Attr) SetTarget(t uint32) { a.target = t }
 
 // Len returns the number of elements in the data store.
-func (a *Attr) Len() int {
+func (a *Attr) Len() int32 {
 	switch v := a.data.(type) {
 	case []int8:
-		return len(v)
+		return int32(len(v))
 	case []uint8:
-		return len(v)
+		return int32(len(v))
 	case []int16:
-		return len(v)
+		return int32(len(v))
 	case []uint16:
-		return len(v)
+		return int32(len(v))
 	case []int32:
-		return len(v)
+		return int32(len(v))
 	case []uint32:
-		return len(v)
+		return int32(len(v))
 	case []float32:
-		return len(v)
+		return int32(len(v))
 	case []float64:
-		return len(v)
+		return int32(len(v))
 	}
 
 	return 0
@@ -205,76 +205,76 @@ func (a *Attr) Len() int {
 func (a *Attr) buffer() {
 	switch v := a.data.(type) {
 	case []int8:
-		size := len(v) * a.stride
+		size := len(v) * int(a.stride)
 
 		if size != a.gpuSize {
-			gl.BufferData(a.target, size, v, a.usage)
+			gl.BufferData(a.target, size, unsafe.Pointer(&v), a.usage)
 			a.gpuSize = size
 		} else {
-			gl.BufferSubData(a.target, 0, size, v)
+			gl.BufferSubData(a.target, 0, size, unsafe.Pointer(&v))
 		}
 	case []uint8:
-		size := len(v) * a.stride
+		size := len(v) * int(a.stride)
 
 		if size != a.gpuSize {
-			gl.BufferData(a.target, size, v, a.usage)
+			gl.BufferData(a.target, size, unsafe.Pointer(&v), a.usage)
 			a.gpuSize = size
 		} else {
-			gl.BufferSubData(a.target, 0, size, v)
+			gl.BufferSubData(a.target, 0, size, unsafe.Pointer(&v))
 		}
 	case []int16:
-		size := len(v) * a.stride
+		size := len(v) * int(a.stride)
 
 		if size != a.gpuSize {
-			gl.BufferData(a.target, size, v, a.usage)
+			gl.BufferData(a.target, size, unsafe.Pointer(&v), a.usage)
 			a.gpuSize = size
 		} else {
-			gl.BufferSubData(a.target, 0, size, v)
+			gl.BufferSubData(a.target, 0, size, unsafe.Pointer(&v))
 		}
 	case []uint16:
-		size := len(v) * a.stride
+		size := len(v) * int(a.stride)
 
 		if size != a.gpuSize {
-			gl.BufferData(a.target, size, v, a.usage)
+			gl.BufferData(a.target, size, unsafe.Pointer(&v), a.usage)
 			a.gpuSize = size
 		} else {
-			gl.BufferSubData(a.target, 0, size, v)
+			gl.BufferSubData(a.target, 0, size, unsafe.Pointer(&v))
 		}
 	case []int32:
-		size := len(v) * a.stride
+		size := len(v) * int(a.stride)
 
 		if size != a.gpuSize {
-			gl.BufferData(a.target, size, v, a.usage)
+			gl.BufferData(a.target, size, unsafe.Pointer(&v), a.usage)
 			a.gpuSize = size
 		} else {
-			gl.BufferSubData(a.target, 0, size, v)
+			gl.BufferSubData(a.target, 0, size, unsafe.Pointer(&v))
 		}
 	case []uint32:
-		size := len(v) * a.stride
+		size := len(v) * int(a.stride)
 
 		if size != a.gpuSize {
-			gl.BufferData(a.target, size, v, a.usage)
+			gl.BufferData(a.target, size, unsafe.Pointer(&v), a.usage)
 			a.gpuSize = size
 		} else {
-			gl.BufferSubData(a.target, 0, size, v)
+			gl.BufferSubData(a.target, 0, size, unsafe.Pointer(&v))
 		}
 	case []float32:
-		size := len(v) * a.stride
+		size := len(v) * int(a.stride)
 
 		if size != a.gpuSize {
-			gl.BufferData(a.target, size, v, a.usage)
+			gl.BufferData(a.target, size, unsafe.Pointer(&v), a.usage)
 			a.gpuSize = size
 		} else {
-			gl.BufferSubData(a.target, 0, size, v)
+			gl.BufferSubData(a.target, 0, size, unsafe.Pointer(&v))
 		}
 	case []float64:
-		size := len(v) * a.stride
+		size := len(v) * int(a.stride)
 
 		if size != a.gpuSize {
-			gl.BufferData(a.target, size, v, a.usage)
+			gl.BufferData(a.target, size, unsafe.Pointer(&v), a.usage)
 			a.gpuSize = size
 		} else {
-			gl.BufferSubData(a.target, 0, size, v)
+			gl.BufferSubData(a.target, 0, size, unsafe.Pointer(&v))
 		}
 
 	}
@@ -325,7 +325,7 @@ func (a *Attr) increment(start int, value float64) {
 
 // append appends the given slice to the data store.
 // We expect a slice of the appropriate type. E.g.: []uint8, []float32, etc.
-func (a *Attr) append(data interface{}) int {
+func (a *Attr) append(data interface{}) int32 {
 	var n int
 
 	switch va := a.data.(type) {
@@ -371,38 +371,38 @@ func (a *Attr) append(data interface{}) int {
 	}
 
 	a.invalid = true
-	return n
+	return int32(n)
 }
 
 // Ptr returns a pointer to the element indicated by index.
 // Used in RenderArrays mode.
-func (a *Attr) ptr(index int) uintptr {
+func (a *Attr) ptr(index int) unsafe.Pointer {
 	switch v := a.data.(type) {
 	case []int8:
-		return uintptr(unsafe.Pointer(&v[index]))
+		return unsafe.Pointer(&v[index])
 	case []uint8:
-		return uintptr(unsafe.Pointer(&v[index]))
+		return unsafe.Pointer(&v[index])
 	case []int16:
-		return uintptr(unsafe.Pointer(&v[index]))
+		return unsafe.Pointer(&v[index])
 	case []uint16:
-		return uintptr(unsafe.Pointer(&v[index]))
+		return unsafe.Pointer(&v[index])
 	case []int32:
-		return uintptr(unsafe.Pointer(&v[index]))
+		return unsafe.Pointer(&v[index])
 	case []uint32:
-		return uintptr(unsafe.Pointer(&v[index]))
+		return unsafe.Pointer(&v[index])
 	case []float32:
-		return uintptr(unsafe.Pointer(&v[index]))
+		return unsafe.Pointer(&v[index])
 	case []float64:
-		return uintptr(unsafe.Pointer(&v[index]))
+		return unsafe.Pointer(&v[index])
 	}
 
-	return 0
+	return unsafe.Pointer(nil)
 }
 
 // vertex draws vertices.
 // Used in classic render mode.
 func (a *Attr) vertex(i int) {
-	i *= a.size
+	i *= int(a.size)
 
 	switch a.size {
 	case 2:
@@ -410,7 +410,7 @@ func (a *Attr) vertex(i int) {
 		case []int16:
 			gl.Vertex2s(v[i], v[i+1])
 		case []int32:
-			gl.Vertex2i(int(v[i]), int(v[i+1]))
+			gl.Vertex2i(v[i], v[i+1])
 		case []float32:
 			gl.Vertex2f(v[i], v[i+1])
 		case []float64:
@@ -421,7 +421,7 @@ func (a *Attr) vertex(i int) {
 		case []int16:
 			gl.Vertex3s(v[i], v[i+1], v[i+2])
 		case []int32:
-			gl.Vertex3i(int(v[i]), int(v[i+1]), int(v[i+2]))
+			gl.Vertex3i(v[i], v[i+1], v[i+2])
 		case []float32:
 			gl.Vertex3f(v[i], v[i+1], v[i+2])
 		case []float64:
@@ -432,7 +432,7 @@ func (a *Attr) vertex(i int) {
 		case []int16:
 			gl.Vertex4s(v[i], v[i+1], v[i+2], v[i+3])
 		case []int32:
-			gl.Vertex4i(int(v[i]), int(v[i+1]), int(v[i+2]), int(v[i+3]))
+			gl.Vertex4i(v[i], v[i+1], v[i+2], v[i+3])
 		case []float32:
 			gl.Vertex4f(v[i], v[i+1], v[i+2], v[i+3])
 		case []float64:
@@ -444,7 +444,7 @@ func (a *Attr) vertex(i int) {
 // texcoord defines vertex texture coordinates.
 // Used in classic render mode.
 func (a *Attr) texcoord(i int) {
-	i *= a.size
+	i *= int(a.size)
 
 	switch a.size {
 	case 1:
@@ -452,7 +452,7 @@ func (a *Attr) texcoord(i int) {
 		case []int16:
 			gl.TexCoord1s(v[i])
 		case []int32:
-			gl.TexCoord1i(int(v[i]))
+			gl.TexCoord1i(v[i])
 		case []float32:
 			gl.TexCoord1f(v[i])
 		case []float64:
@@ -463,7 +463,7 @@ func (a *Attr) texcoord(i int) {
 		case []int16:
 			gl.TexCoord2s(v[i], v[i+1])
 		case []int32:
-			gl.TexCoord2i(int(v[i]), int(v[i+1]))
+			gl.TexCoord2i(v[i], v[i+1])
 		case []float32:
 			gl.TexCoord2f(v[i], v[i+1])
 		case []float64:
@@ -474,7 +474,7 @@ func (a *Attr) texcoord(i int) {
 		case []int16:
 			gl.TexCoord3s(v[i], v[i+1], v[i+2])
 		case []int32:
-			gl.TexCoord3i(int(v[i]), int(v[i+1]), int(v[i+2]))
+			gl.TexCoord3i(v[i], v[i+1], v[i+2])
 		case []float32:
 			gl.TexCoord3f(v[i], v[i+1], v[i+2])
 		case []float64:
@@ -485,7 +485,7 @@ func (a *Attr) texcoord(i int) {
 		case []int16:
 			gl.TexCoord4s(v[i], v[i+1], v[i+2], v[i+3])
 		case []int32:
-			gl.TexCoord4i(int(v[i]), int(v[i+1]), int(v[i+2]), int(v[i+3]))
+			gl.TexCoord4i(v[i], v[i+1], v[i+2], v[i+3])
 		case []float32:
 			gl.TexCoord4f(v[i], v[i+1], v[i+2], v[i+3])
 		case []float64:
@@ -502,7 +502,7 @@ func (a *Attr) normal(i int) {
 		return
 	}
 
-	i *= a.size
+	i *= int(a.size)
 
 	switch v := a.data.(type) {
 	case []int8:
@@ -510,7 +510,7 @@ func (a *Attr) normal(i int) {
 	case []int16:
 		gl.Normal3s(v[i], v[i+1], v[i+2])
 	case []int32:
-		gl.Normal3i(int(v[i]), int(v[i+1]), int(v[i+2]))
+		gl.Normal3i(v[i], v[i+1], v[i+2])
 	case []float32:
 		gl.Normal3f(v[i], v[i+1], v[i+2])
 	case []float64:
@@ -521,7 +521,7 @@ func (a *Attr) normal(i int) {
 // Used in classic render mode.
 // Defines vertex colors.
 func (a *Attr) color(i int) {
-	i *= a.size
+	i *= int(a.size)
 
 	switch a.size {
 	case 3:
@@ -533,7 +533,7 @@ func (a *Attr) color(i int) {
 		case []int16:
 			gl.Color3s(v[i], v[i+1], v[i+2])
 		case []int32:
-			gl.Color3i(int(v[i]), int(v[i+1]), int(v[i+2]))
+			gl.Color3i(v[i], v[i+1], v[i+2])
 		case []float32:
 			gl.Color3f(v[i], v[i+1], v[i+2])
 		case []float64:
@@ -548,7 +548,7 @@ func (a *Attr) color(i int) {
 		case []int16:
 			gl.Color4s(v[i], v[i+1], v[i+2], v[i+3])
 		case []int32:
-			gl.Color4i(int(v[i]), int(v[i+1]), int(v[i+2]), int(v[i+3]))
+			gl.Color4i(v[i], v[i+1], v[i+2], v[i+3])
 		case []float32:
 			gl.Color4f(v[i], v[i+1], v[i+2], v[i+3])
 		case []float64:
@@ -562,21 +562,21 @@ func (a *Attr) color(i int) {
 func (a *Attr) index(offset int) int {
 	switch v := a.data.(type) {
 	case []int8:
-		return int(v[offset*a.size])
+		return int(v[offset*int(a.size)])
 	case []uint8:
-		return int(v[offset*a.size])
+		return int(v[offset*int(a.size)])
 	case []int16:
-		return int(v[offset*a.size])
+		return int(v[offset*int(a.size)])
 	case []uint16:
-		return int(v[offset*a.size])
+		return int(v[offset*int(a.size)])
 	case []int32:
-		return int(v[offset*a.size])
+		return int(v[offset*int(a.size)])
 	case []uint32:
-		return int(v[offset*a.size])
+		return int(v[offset*int(a.size)])
 	case []float32:
-		return int(v[offset*a.size])
+		return int(v[offset*int(a.size)])
 	case []float64:
-		return int(v[offset*a.size])
+		return int(v[offset*int(a.size)])
 	}
 
 	return 0

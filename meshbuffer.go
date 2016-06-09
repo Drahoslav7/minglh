@@ -5,11 +5,12 @@
 package glh
 
 import (
-	"github.com/go-gl/gl/v4.5-core/gl"
+	"github.com/go-gl/gl/v3.2-compatibility/gl"
+	"unsafe"
 )
 
 // Mesh describes the data offsets for a single mesh inside a mesh buffer.
-type Mesh map[string][2]int
+type Mesh map[string][2]int32
 
 // A RenderMode determines how a MeshBuffer should buffer and render mesh data.
 type RenderMode uint8
@@ -107,7 +108,7 @@ func NewMeshBuffer(mode RenderMode, attr ...*Attr) *MeshBuffer {
 	}
 
 	for _, attr := range mb.attr {
-		mb.mesh[attr.name] = [2]int{0, 0}
+		mb.mesh[attr.name] = [2]int32{0, 0}
 		attr.init(mode)
 	}
 
@@ -133,7 +134,7 @@ func (mb *MeshBuffer) Clear() {
 	}
 
 	for key := range mb.mesh {
-		mb.mesh[key] = [2]int{0, 0}
+		mb.mesh[key] = [2]int32{0, 0}
 	}
 
 	mb.meshes = mb.meshes[:0]
@@ -192,9 +193,9 @@ func (mb *MeshBuffer) renderClassic(mode uint32, m Mesh, pa, ca, na, ta, ia *Att
 	ts, tc := m[mbTexCoordKey][0], m[mbTexCoordKey][1]
 	ic := m[mbIndexKey][1]
 
-	count := pc
+	count := int(pc)
 	if ic > 0 {
-		count = ic
+		count = int(ic)
 	}
 
 	gl.Begin(mode)
@@ -207,19 +208,19 @@ func (mb *MeshBuffer) renderClassic(mode uint32, m Mesh, pa, ca, na, ta, ia *Att
 		}
 
 		if cc > 0 {
-			ca.color(idx + cs)
+			ca.color(idx + int(cs))
 		}
 
 		if nc > 0 {
-			na.normal(idx + ns)
+			na.normal(idx + int(ns))
 		}
 
 		if tc > 0 {
-			ta.texcoord(idx + ts)
+			ta.texcoord(idx + int(ts))
 		}
 
 		if pc > 0 {
-			pa.vertex(idx + ps)
+			pa.vertex(idx + int(ps))
 		}
 	}
 
@@ -266,7 +267,7 @@ func (mb *MeshBuffer) renderArrays(mode uint32, m Mesh, pa, ca, na, ta, ia *Attr
 	}
 
 	if ic > 0 {
-		gl.DrawElements(mode, ic, ia.typ, ia.ptr(is*ia.size))
+		gl.DrawElements(mode, ic, ia.typ, ia.ptr(int(is*ia.size)))
 	} else {
 		gl.DrawArrays(mode, ps, pc)
 	}
@@ -289,7 +290,7 @@ func (mb *MeshBuffer) renderBuffered(mode uint32, m Mesh, pa, ca, na, ta, ia *At
 		if pa.Invalid() {
 			pa.buffer()
 		}
-		gl.VertexPointer(pa.size, pa.typ, 0, uintptr(0))
+		gl.VertexPointer(pa.size, pa.typ, 0, unsafe.Pointer(uintptr(0)))
 		pa.unbind()
 	}
 
@@ -301,7 +302,7 @@ func (mb *MeshBuffer) renderBuffered(mode uint32, m Mesh, pa, ca, na, ta, ia *At
 		if ca.Invalid() {
 			ca.buffer()
 		}
-		gl.ColorPointer(ca.size, ca.typ, 0, uintptr(0))
+		gl.ColorPointer(ca.size, ca.typ, 0, unsafe.Pointer(uintptr(0)))
 		ca.unbind()
 	}
 
@@ -313,7 +314,7 @@ func (mb *MeshBuffer) renderBuffered(mode uint32, m Mesh, pa, ca, na, ta, ia *At
 		if na.Invalid() {
 			na.buffer()
 		}
-		gl.NormalPointer(na.typ, 0, uintptr(0))
+		gl.NormalPointer(na.typ, 0, unsafe.Pointer(uintptr(0)))
 		na.unbind()
 	}
 
@@ -325,7 +326,7 @@ func (mb *MeshBuffer) renderBuffered(mode uint32, m Mesh, pa, ca, na, ta, ia *At
 		if ta.Invalid() {
 			ta.buffer()
 		}
-		gl.TexCoordPointer(ta.size, ta.typ, 0, uintptr(0))
+		gl.TexCoordPointer(ta.size, ta.typ, 0, unsafe.Pointer(uintptr(0)))
 		ta.unbind()
 	}
 
@@ -337,7 +338,7 @@ func (mb *MeshBuffer) renderBuffered(mode uint32, m Mesh, pa, ca, na, ta, ia *At
 		}
 
 		gl.PushClientAttrib(gl.CLIENT_VERTEX_ARRAY_BIT)
-		gl.DrawElements(mode, ic, ia.typ, uintptr(is*ia.stride))
+		gl.DrawElements(mode, ic, ia.typ, unsafe.Pointer(uintptr(is*ia.stride)))
 		gl.PopClientAttrib()
 		ia.unbind()
 	} else {
@@ -373,8 +374,8 @@ func (mb *MeshBuffer) Add(argv ...interface{}) int {
 		start := attr.Len() / attr.size
 		count := attr.append(argv[i]) / attr.size
 
-		m[attr.name] = [2]int{start, count}
-		mb.mesh[attr.name] = [2]int{0, start + count}
+		m[attr.name] = [2]int32{start, count}
+		mb.mesh[attr.name] = [2]int32{0, start + count}
 	}
 
 	// Update indices if necessary.
@@ -385,7 +386,7 @@ func (mb *MeshBuffer) Add(argv ...interface{}) int {
 		}
 
 		ia := mb.find(mbIndexKey)
-		ia.increment(index[0], float64(pos[0]))
+		ia.increment(int(index[0]), float64(pos[0]))
 	}
 
 	mb.meshes = append(mb.meshes, m)

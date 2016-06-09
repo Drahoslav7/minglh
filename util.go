@@ -13,62 +13,79 @@ import (
 	"unsafe"
 
 	"github.com/go-gl/gl/v3.2-compatibility/gl"
-	"github.com/go-gl/glu"
+	// "github.com/go-gl/glu"
 )
 
 // Sizeof yields the byte size for GL type specified by the given enum.
-func Sizeof(gtype uint32) uint {
+func Sizeof(gtype uint32) int32 {
 	switch gtype {
 	case gl.BOOL:
-		var v gl.GLboolean
-		return uint(unsafe.Sizeof(v))
+		// var v gl.GLboolean
+		// return int32(unsafe.Sizeof(v))
+		return 1
 
 	case gl.BYTE:
-		var v gl.GLbyte
-		return uint(unsafe.Sizeof(v))
+		// var v gl.GLbyte
+		// return int32(unsafe.Sizeof(v))
+		return 1
 
 	case gl.UNSIGNED_BYTE:
-		var v gl.GLubyte
-		return uint(unsafe.Sizeof(v))
+		// var v gl.GLubyte
+		// return int32(unsafe.Sizeof(v))
+		return 1
 
 	case gl.SHORT:
-		var v gl.GLshort
-		return uint(unsafe.Sizeof(v))
+		// var v gl.GLshort
+		// return int32(unsafe.Sizeof(v))
+		return 2
 
 	case gl.UNSIGNED_SHORT:
-		var v gl.GLushort
-		return uint(unsafe.Sizeof(v))
+		// var v gl.GLushort
+		// return int32(unsafe.Sizeof(v))
+		return 2
 
 	case gl.INT:
-		var v gl.GLint
-		return uint(unsafe.Sizeof(v))
+		// var v gl.GLint
+		// return int32(unsafe.Sizeof(v))
+		return 4
 
 	case gl.UNSIGNED_INT:
-		var v gl.GLuint
-		return uint(unsafe.Sizeof(v))
+		// var v gl.GLuint
+		// return int32(unsafe.Sizeof(v))
+		return 4
 
 	case gl.FLOAT:
-		var v gl.GLfloat
-		return uint(unsafe.Sizeof(v))
+		// var v gl.GLfloat
+		// return int32(unsafe.Sizeof(v))
+		return 4
 
 	case gl.DOUBLE:
-		var v gl.GLdouble
-		return uint(unsafe.Sizeof(v))
+		// var v gl.GLdouble
+		// return int32(unsafe.Sizeof(v))
+		return 8
 	}
 
 	panic("Unsupported type")
 }
+
+// func ErrorString(error gl.GLenum) (string, error) {
+// 	e := unsafe.Pointer(C.gluErrorString(C.GLenum(error)))
+// 	if e == nil {
+// 		return "", errors.New("Invalid GL error code")
+// 	}
+// 	return C.GoString((*C.char)(e)), nil
+// }
 
 // Used as "defer OpenGLSentinel()()" checks the gl error code on call and exit
 func OpenGLSentinel() func() {
 	check := func() {
 		e := gl.GetError()
 		if e != gl.NO_ERROR {
-			s, err := glu.ErrorString(e)
-			if err != nil {
-				log.Panic("Invalid error code: ", err)
-			}
-			log.Panic("Encountered GLError: ", e, " = ", s)
+			// s, err := ErrorString(e)
+			// if err != nil {
+			// 	log.Panic("Invalid error code: ", err)
+			// }
+			log.Panic("Encountered GLError: ", e, /* " = ", s */)
 		}
 	}
 	check()
@@ -78,7 +95,7 @@ func OpenGLSentinel() func() {
 // Returns w, h of viewport
 func GetViewportWH() (int, int) {
 	var viewport [4]int32
-	gl.GetIntegerv(gl.VIEWPORT, viewport[:])
+	gl.GetIntegerv(gl.VIEWPORT, &viewport[0])
 	return int(viewport[2]), int(viewport[3])
 }
 
@@ -87,39 +104,39 @@ func GetViewportWHD() (float64, float64) {
 	return float64(w), float64(h)
 }
 
-// Returns x, y in window co-ordinates at 0 in the z direction
-func WindowToProj(x, y int) (float64, float64) {
-	var projmat, modelmat [16]float64
-	var viewport [4]int32
+// // Returns x, y in window co-ordinates at 0 in the z direction
+// func WindowToProj(x, y int) (float64, float64) {
+// 	var projmat, modelmat [16]float64
+// 	var viewport [4]int32
 
-	gl.GetDoublev(gl.PROJECTION_MATRIX, projmat[:])
-	gl.GetDoublev(gl.MODELVIEW_MATRIX, modelmat[:])
+// 	gl.GetDoublev(gl.PROJECTION_MATRIX, projmat[:])
+// 	gl.GetDoublev(gl.MODELVIEW_MATRIX, modelmat[:])
 
-	gl.GetIntegerv(gl.VIEWPORT, viewport[:])
-	// Need to convert so that y is at lower left
-	y = int(viewport[3]) - y
+// 	gl.GetIntegerv(gl.VIEWPORT, viewport[:])
+// 	// Need to convert so that y is at lower left
+// 	y = int(viewport[3]) - y
 
-	px, py, _ := glu.UnProject(float64(x), float64(y), 0,
-		&modelmat, &projmat, &viewport)
+// 	px, py, _ := glu.UnProject(float64(x), float64(y), 0,
+// 		&modelmat, &projmat, &viewport)
 
-	return px, py
-}
+// 	return px, py
+// }
 
-// Returns x, y in window co-ordinates at 0 in the z direction
-func ProjToWindow(x, y float64) (float64, float64) {
-	var projmat, modelmat [16]float64
-	var viewport [4]int32
+// // Returns x, y in window co-ordinates at 0 in the z direction
+// func ProjToWindow(x, y float64) (float64, float64) {
+// 	var projmat, modelmat [16]float64
+// 	var viewport [4]int32
 
-	gl.GetDoublev(gl.PROJECTION_MATRIX, projmat[:])
-	gl.GetDoublev(gl.MODELVIEW_MATRIX, modelmat[:])
-	gl.GetIntegerv(gl.VIEWPORT, viewport[:])
+// 	gl.GetDoublev(gl.PROJECTION_MATRIX, projmat[:])
+// 	gl.GetDoublev(gl.MODELVIEW_MATRIX, modelmat[:])
+// 	gl.GetIntegerv(gl.VIEWPORT, viewport[:])
 
-	px, py, _ := glu.Project(float64(x), float64(y), 0,
-		&modelmat, &projmat, &viewport)
+// 	px, py, _ := glu.Project(float64(x), float64(y), 0,
+// 		&modelmat, &projmat, &viewport)
 
-	//return int(px), int(viewport[3]) - int(py)
-	return px, float64(viewport[3]) - py
-}
+// 	//return int(px), int(viewport[3]) - int(py)
+// 	return px, float64(viewport[3]) - py
+// }
 
 // Draws lines of unit length along the X, Y, Z axis in R, G, B
 func DrawAxes() {
@@ -168,8 +185,8 @@ func DebugLines() {
 }
 
 // Emit Vertices of a square with texture co-ordinates which wind anti-clockwise
-func Squarei(x, y, w, h int) {
-	u, v, u2, v2 := 0, 1, 1, 0
+func Squarei(x, y, w, h int32) {
+	var u, v, u2, v2 int32 = 0, 1, 1, 0
 
 	gl.TexCoord2i(u, v)
 	gl.Vertex2i(x, y)
@@ -185,7 +202,7 @@ func Squarei(x, y, w, h int) {
 }
 
 // Draw a Quad with integer co-ordinates (Using Squarei)
-func DrawQuadi(x, y, w, h int) {
+func DrawQuadi(x, y, w, h int32) {
 	With(Primitive{gl.QUADS}, func() {
 		Squarei(x, y, w, h)
 	})
@@ -193,7 +210,7 @@ func DrawQuadi(x, y, w, h int) {
 
 // Same as Squarei, double co-ordinates
 func Squared(x, y, w, h float64) {
-	u, v, u2, v2 := 0, 1, 1, 0
+	var u, v, u2, v2 int32 = 0, 1, 1, 0
 
 	gl.TexCoord2i(u, v)
 	gl.Vertex2d(x, y)
@@ -218,7 +235,7 @@ func DrawQuadd(x, y, w, h float64) {
 func CaptureRGBA(im *image.RGBA) {
 	b := im.Bounds()
 	gl.ReadBuffer(gl.BACK_LEFT)
-	gl.ReadPixels(0, 0, b.Dx(), b.Dy(), gl.RGBA, gl.UNSIGNED_BYTE, im.Pix)
+	gl.ReadPixels(0, 0, int32(b.Dx()), int32(b.Dy()), gl.RGBA, gl.UNSIGNED_BYTE, unsafe.Pointer(&im.Pix))
 }
 
 // Note: You may want to call ClearAlpha(1) first..
@@ -245,7 +262,7 @@ func ColorC(c color.Color) {
 }
 
 // Clear the alpha channel in the color buffer
-func ClearAlpha(alpha_value gl.GLclampf) {
+func ClearAlpha(alpha_value float32) {
 	With(Attrib{gl.COLOR_BUFFER_BIT}, func() {
 		gl.ColorMask(false, false, false, true)
 		gl.ClearColor(0, 0, 0, alpha_value)
