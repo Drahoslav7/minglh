@@ -208,73 +208,73 @@ func (a *Attr) buffer() {
 		size := len(v) * int(a.stride)
 
 		if size != a.gpuSize {
-			gl.BufferData(a.target, size, unsafe.Pointer(&v), a.usage)
+			gl.BufferData(a.target, size, unsafe.Pointer(&v[0]), a.usage)
 			a.gpuSize = size
 		} else {
-			gl.BufferSubData(a.target, 0, size, unsafe.Pointer(&v))
+			gl.BufferSubData(a.target, 0, size, unsafe.Pointer(&v[0]))
 		}
 	case []uint8:
 		size := len(v) * int(a.stride)
 
 		if size != a.gpuSize {
-			gl.BufferData(a.target, size, unsafe.Pointer(&v), a.usage)
+			gl.BufferData(a.target, size, unsafe.Pointer(&v[0]), a.usage)
 			a.gpuSize = size
 		} else {
-			gl.BufferSubData(a.target, 0, size, unsafe.Pointer(&v))
+			gl.BufferSubData(a.target, 0, size, unsafe.Pointer(&v[0]))
 		}
 	case []int16:
 		size := len(v) * int(a.stride)
 
 		if size != a.gpuSize {
-			gl.BufferData(a.target, size, unsafe.Pointer(&v), a.usage)
+			gl.BufferData(a.target, size, unsafe.Pointer(&v[0]), a.usage)
 			a.gpuSize = size
 		} else {
-			gl.BufferSubData(a.target, 0, size, unsafe.Pointer(&v))
+			gl.BufferSubData(a.target, 0, size, unsafe.Pointer(&v[0]))
 		}
 	case []uint16:
 		size := len(v) * int(a.stride)
 
 		if size != a.gpuSize {
-			gl.BufferData(a.target, size, unsafe.Pointer(&v), a.usage)
+			gl.BufferData(a.target, size, unsafe.Pointer(&v[0]), a.usage)
 			a.gpuSize = size
 		} else {
-			gl.BufferSubData(a.target, 0, size, unsafe.Pointer(&v))
+			gl.BufferSubData(a.target, 0, size, unsafe.Pointer(&v[0]))
 		}
 	case []int32:
 		size := len(v) * int(a.stride)
 
 		if size != a.gpuSize {
-			gl.BufferData(a.target, size, unsafe.Pointer(&v), a.usage)
+			gl.BufferData(a.target, size, unsafe.Pointer(&v[0]), a.usage)
 			a.gpuSize = size
 		} else {
-			gl.BufferSubData(a.target, 0, size, unsafe.Pointer(&v))
+			gl.BufferSubData(a.target, 0, size, unsafe.Pointer(&v[0]))
 		}
 	case []uint32:
 		size := len(v) * int(a.stride)
 
 		if size != a.gpuSize {
-			gl.BufferData(a.target, size, unsafe.Pointer(&v), a.usage)
+			gl.BufferData(a.target, size, unsafe.Pointer(&v[0]), a.usage)
 			a.gpuSize = size
 		} else {
-			gl.BufferSubData(a.target, 0, size, unsafe.Pointer(&v))
+			gl.BufferSubData(a.target, 0, size, unsafe.Pointer(&v[0]))
 		}
 	case []float32:
 		size := len(v) * int(a.stride)
 
 		if size != a.gpuSize {
-			gl.BufferData(a.target, size, unsafe.Pointer(&v), a.usage)
+			gl.BufferData(a.target, size, unsafe.Pointer(&v[0]), a.usage)
 			a.gpuSize = size
 		} else {
-			gl.BufferSubData(a.target, 0, size, unsafe.Pointer(&v))
+			gl.BufferSubData(a.target, 0, size, unsafe.Pointer(&v[0]))
 		}
 	case []float64:
 		size := len(v) * int(a.stride)
 
 		if size != a.gpuSize {
-			gl.BufferData(a.target, size, unsafe.Pointer(&v), a.usage)
+			gl.BufferData(a.target, size, unsafe.Pointer(&v[0]), a.usage)
 			a.gpuSize = size
 		} else {
-			gl.BufferSubData(a.target, 0, size, unsafe.Pointer(&v))
+			gl.BufferSubData(a.target, 0, size, unsafe.Pointer(&v[0]))
 		}
 
 	}
